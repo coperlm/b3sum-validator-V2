@@ -79,11 +79,16 @@ jobs:
         with:
           path: artifacts
 
+      - name: Prepare release file
+        run: |
+          mv artifacts/b3sum-validator-windows/b3sum_rename.exe ./b3sum_rename.exe
+          ls -la
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.version }}
-          files: artifacts/b3sum-validator-windows/b3sum_rename.exe
+          files: b3sum_rename.exe
           draft: false
           prerelease: false
           generate_release_notes: true
