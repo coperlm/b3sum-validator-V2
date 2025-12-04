@@ -87,6 +87,8 @@ jobs:
       - name: Get next version
         id: version
         run: |
+          # 从远程获取所有 tags
+          git fetch --tags
           # 获取最新的 tag，如果没有则从 v1.0.0 开始
           LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | head -n 1)
           if [ -z "$LATEST_TAG" ]; then
