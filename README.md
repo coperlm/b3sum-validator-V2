@@ -17,7 +17,7 @@ pip install -r requirements.txt
 
 **命令行（所有平台）**
 ```bash
-python b3sum_rename.py <文件路径>
+python b3sum_rename.py
 ```
 
 **右键菜单（推荐）**
