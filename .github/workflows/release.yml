@@ -1,9 +1,9 @@
-name: Release
+ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'  # 当推送 v* 标签时触发（如 v1.0.0）
+    branches:
+      - main  # 当推送到 main 分支时触发
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
         include:
           - os: windows-latest
             artifact_name: b3sum-validator-windows
-            asset_name: b3sum-validator-windows.zip
+            exe_name: b3sum_rename.exe
           - os: ubuntu-latest
             artifact_name: b3sum-validator-linux
             asset_name: b3sum-validator-linux.tar.gz
@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: dist/b3sum_rename.exe
+          path: dist/${{ matrix.exe_name }}
 
       - name: Upload artifact (Linux/macOS)
         if: matrix.os != 'windows-latest'
@@ -81,6 +81,32 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get next version
+        id: version
+        run: |
+          # 获取最新的 tag，如果没有则从 v1.0.0 开始
+          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | head -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            NEW_VERSION="v1.0.0"
+          else
+            # 提取版本号并递增
+            VERSION=${LATEST_TAG#v}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+            PATCH=$((PATCH + 1))
+            NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "新版本: $NEW_VERSION"
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -90,6 +116,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ steps.version.outputs.version }}
           files: |
             artifacts/b3sum-validator-windows/b3sum_rename.exe
             artifacts/b3sum-validator-linux/*.tar.gz
