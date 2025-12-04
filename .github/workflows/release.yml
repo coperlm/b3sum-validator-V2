@@ -27,7 +27,7 @@ jobs:
 
       - name: Build executable
         run: |
-          pyinstaller --onefile --name b3sum_rename --icon=NONE b3sum_rename.py
+          pyinstaller --onefile --name b3sum_rename --icon=NONE --manifest b3sum_rename.manifest b3sum_rename.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
