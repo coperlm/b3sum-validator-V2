@@ -7,21 +7,8 @@ on:
 
 jobs:
   build:
-    name: Build and Release
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        include:
-          - os: windows-latest
-            artifact_name: b3sum-validator-windows
-            exe_name: b3sum_rename.exe
-          - os: ubuntu-latest
-            artifact_name: b3sum-validator-linux
-            asset_name: b3sum-validator-linux.tar.gz
-          - os: macos-latest
-            artifact_name: b3sum-validator-macos
-            asset_name: b3sum-validator-macos.tar.gz
+    name: Build Windows Release
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -38,38 +25,15 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Build executable (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Build executable
         run: |
           pyinstaller --onefile --name b3sum_rename --icon=NONE b3sum_rename.py
 
-      - name: Build executable (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        run: |
-          pyinstaller --onefile --name b3sum_rename b3sum_rename.py
-          cp README.md dist/
-          cp LICENSE dist/
-
-      - name: Package (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        run: |
-          cd dist
-          tar -czf ../${{ matrix.asset_name }} *
-          cd ..
-
-      - name: Upload artifact (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.exe_name }}
-
-      - name: Upload artifact (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.asset_name }}
+          name: b3sum-validator-windows
+          path: dist/b3sum_rename.exe
 
   release:
     name: Create Release
@@ -119,10 +83,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.version }}
-          files: |
-            artifacts/b3sum-validator-windows/b3sum_rename.exe
-            artifacts/b3sum-validator-linux/*.tar.gz
-            artifacts/b3sum-validator-macos/*.tar.gz
+          files: artifacts/b3sum-validator-windows/b3sum_rename.exe
           draft: false
           prerelease: false
           generate_release_notes: true

@@ -2,8 +2,6 @@ import os
 import sys
 import hashlib
 import re
-import tkinter as tk
-from tkinter import messagebox
 from pathlib import Path
 import platform
 
@@ -15,6 +13,14 @@ IS_MAC = platform.system() == 'Darwin'
 if IS_WINDOWS:
     import winreg
     import ctypes
+    try:
+        import tkinter as tk
+        from tkinter import messagebox
+        HAS_GUI = True
+    except:
+        HAS_GUI = False
+else:
+    HAS_GUI = False
 
 try:
     import blake3
@@ -182,6 +188,14 @@ def unregister_context_menu_linux():
 
 def show_gui():
     """显示简单的GUI界面用于注册/移除右键菜单"""
+    if not HAS_GUI:
+        print("当前环境不支持图形界面")
+        print("使用方法:")
+        print("  注册右键菜单: python b3sum_rename.py --register")
+        print("  移除右键菜单: python b3sum_rename.py --unregister")
+        print("  重命名文件: python b3sum_rename.py <文件路径>")
+        return
+    
     root = tk.Tk()
     root.title("BLAKE3 哈希重命名工具")
     root.geometry("400x250")
@@ -217,8 +231,21 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         show_gui()
     elif len(sys.argv) == 2:
-        file_path = sys.argv[1]
-        # 直接重命名，不显示任何弹窗
-        rename_file(file_path)
+        arg = sys.argv[1]
+        if arg == "--register":
+            result = register_context_menu()
+            print(result)
+        elif arg == "--unregister":
+            result = unregister_context_menu()
+            print(result)
+        else:
+            # 文件路径，重命名文件
+            file_path = arg
+            result = rename_file(file_path)
+            print(result)
     else:
-        print("用法: b3sum_rename.py [文件路径]")
+        print("用法:")
+        print("  python b3sum_rename.py                    # 打开GUI（仅Windows）")
+        print("  python b3sum_rename.py --register         # 注册右键菜单")
+        print("  python b3sum_rename.py --unregister       # 移除右键菜单")
+        print("  python b3sum_rename.py <文件路径>         # 重命名文件")
